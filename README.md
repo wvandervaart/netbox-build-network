@@ -1,11 +1,13 @@
 # netbox-build-network
 
-Adds a top-level NetBox menu item ("Build Network"). Clicking it hits an internal
-plugin URL, which 302-redirects the browser to:
+Adds a "Build Network" entry under the **Plugins** dropdown in NetBox's top
+nav. Clicking it hits an internal plugin URL, which opens a new browser tab
+pointed at:
 
     http://drone.as49206.net:8080/?message=<username>-<timestamp>
 
-so the browser itself performs the final GET request.
+so the new tab performs the GET request while the original NetBox tab stays
+where it was.
 
 ## Install
 
@@ -67,9 +69,10 @@ docker compose up -d
 
 ### Verify
 
-Log in to NetBox, and confirm a "Build Network" entry appears in the top
-navigation menu. Clicking it should redirect your browser to
-`drone.as49206.net:8080` with a `message` query parameter.
+Log in to NetBox, open the **Plugins** dropdown in the top navigation menu,
+and confirm a "Build Network" entry appears. Clicking it should open a new
+tab pointed at `drone.as49206.net:8080` with a `message` query parameter,
+while the original NetBox tab stays put.
 
 ## Compatibility note
 
@@ -83,5 +86,8 @@ import path on NetBox >= 3.5. On older NetBox versions, change the imports in
   requires auth for the UI.
 - Timestamp is UTC, ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`).
 - If `drone.as49206.net` is unreachable from the end user's browser (rather
-  than the NetBox server), the redirect will fail client-side — this plugin
+  than the NetBox server), the request will fail client-side — this plugin
   does not proxy the request server-side.
+- The new-tab open relies on an inline `<script>` in the intermediate page;
+  a strict `Content-Security-Policy` (e.g. one blocking `script-src` inline)
+  in front of NetBox would prevent it from firing.
