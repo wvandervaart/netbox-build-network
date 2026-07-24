@@ -4,7 +4,7 @@ Adds a "Build Network" entry under the **Plugins** dropdown in NetBox's top
 nav. Clicking it hits an internal plugin URL, which opens a new browser tab
 pointed at:
 
-    http://drone.as49206.net:8080/?message=<username>-<timestamp>
+    http://drone.as49206.net:8080/?message=<username>
 
 so the new tab performs the GET request while the original NetBox tab stays
 where it was.
@@ -84,7 +84,6 @@ import path on NetBox >= 3.5. On older NetBox versions, change the imports in
 
 - The menu item requires login (`LoginRequiredMixin`) since NetBox already
   requires auth for the UI.
-- Timestamp is UTC, ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`).
 - If `drone.as49206.net` is unreachable from the end user's browser (rather
   than the NetBox server), the request will fail client-side — this plugin
   does not proxy the request server-side.

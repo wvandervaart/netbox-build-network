@@ -1,5 +1,4 @@
 import json
-from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -23,11 +22,10 @@ _PAGE_TEMPLATE = """<!DOCTYPE html>
 
 
 class BeaconRedirectView(LoginRequiredMixin, View):
-    """Opens BEACON_URL in a new tab, triggering a GET with message=<user>-<timestamp>."""
+    """Opens BEACON_URL in a new tab, triggering a GET with message=<user>."""
 
     def get(self, request):
-        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-        message = f'{request.user.get_username()}-{timestamp}'
+        message = request.user.get_username()
         query = urlencode({'message': message})
         beacon_url = f'{BEACON_URL}?{query}'
         back_url = request.META.get('HTTP_REFERER') or '/'
