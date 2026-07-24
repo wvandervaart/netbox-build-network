@@ -8,6 +8,9 @@ class BuildNetworkConfig(PluginConfig):
     version = '0.1.0'
     base_url = 'build-network'
     author = 'wouter'
+    default_settings = {
+        'beacon_url': 'http://example.com:8080/',
+    }
 
 
 config = BuildNetworkConfig

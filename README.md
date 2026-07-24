@@ -2,12 +2,30 @@
 
 Adds a "Build Network" entry under the **Plugins** dropdown in NetBox's top
 nav. Clicking it hits an internal plugin URL, which opens a new browser tab
-pointed at:
+pointed at a configurable `beacon_url` (default `http://example.com:8080/`),
+appending `?message=<username>`, e.g.:
 
-    http://drone.as49206.net:8080/?message=<username>
+    http://example.com:8080/?message=<username>
 
 so the new tab performs the GET request while the original NetBox tab stays
 where it was.
+
+## Configuration
+
+The beacon target is set via NetBox's `PLUGINS_CONFIG`, not hardcoded. Add
+this to `configuration.py` (or `configuration/plugins.py` for Docker):
+
+```python
+PLUGINS_CONFIG = {
+    'netbox_build_network': {
+        'beacon_url': 'http://example.com:8080/',
+    },
+}
+```
+
+If omitted, it falls back to the plugin's `default_settings['beacon_url']`
+in `netbox_build_network/__init__.py`, which also points at
+`http://example.com:8080/`.
 
 ## Install
 
@@ -71,7 +89,7 @@ docker compose up -d
 
 Log in to NetBox, open the **Plugins** dropdown in the top navigation menu,
 and confirm a "Build Network" entry appears. Clicking it should open a new
-tab pointed at `drone.as49206.net:8080` with a `message` query parameter,
+tab pointed at your configured `beacon_url` with a `message` query parameter,
 while the original NetBox tab stays put.
 
 ## Compatibility note
@@ -84,9 +102,9 @@ import path on NetBox >= 3.5. On older NetBox versions, change the imports in
 
 - The menu item requires login (`LoginRequiredMixin`) since NetBox already
   requires auth for the UI.
-- If `drone.as49206.net` is unreachable from the end user's browser (rather
-  than the NetBox server), the request will fail client-side — this plugin
-  does not proxy the request server-side.
+- If the configured `beacon_url` host is unreachable from the end user's
+  browser (rather than the NetBox server), the request will fail
+  client-side — this plugin does not proxy the request server-side.
 - The new-tab open relies on an inline `<script>` in the intermediate page;
   a strict `Content-Security-Policy` (e.g. one blocking `script-src` inline)
   in front of NetBox would prevent it from firing.
