@@ -51,6 +51,14 @@ edit a Permission entry:
 - **Users**/**Groups**: assign directly to a user, or to a group — if a
   group, the target user must actually be a member of it
 
+If you installed before this permission's model/action were renamed
+(`0002_rename_buildnw_action`), run `migrate` again after upgrading, then
+edit your existing Permission entry: the **Object type** carries over
+automatically (Django renames the underlying `ContentType` row in place),
+but you must manually uncheck the old `send_buildnw` action and check the
+new `send` action — that field is a plain list of strings and isn't
+rewritten by the migration.
+
 NetBox constructs the granted permission string as
 `{app_label}.{action}_{model_name}` (see
 `netbox/netbox/authentication/__init__.py` in NetBox core), which is why the

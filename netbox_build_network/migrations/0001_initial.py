@@ -9,14 +9,14 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Buildnw',
+            name='BuildnwPermissions',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
             ],
             options={
                 'managed': False,
                 'default_permissions': (),
-                'permissions': [('send', 'Can send buildnw')],
+                'permissions': [('send_buildnw', 'Can send buildnw')],
             },
         ),
     ]
