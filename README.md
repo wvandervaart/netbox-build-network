@@ -29,10 +29,10 @@ in `netbox_build_network/__init__.py`, which also points at
 
 ## Permissions
 
-Access is gated by a custom Django permission,
-`netbox_build_network.send_buildnw`, defined on an unmanaged model
-(`BuildnwPermissions`) that exists purely to register it — this plugin has no
-real data model. Both the menu item and the underlying view check it:
+Access is gated by a custom permission, `netbox_build_network.send_buildnw`,
+defined on an unmanaged model (`Buildnw`) that exists purely to register it —
+this plugin has no real data model. Both the menu item and the underlying
+view check it:
 
 - Users without the permission don't see "Build Network" in the **Plugins**
   menu at all.
@@ -40,9 +40,22 @@ real data model. Both the menu item and the underlying view check it:
   being logged in, it redirects to the login page.
 - Superusers always pass, per normal Django behavior.
 
-Grant it the same way as any other NetBox permission: **Admin → Users → Groups
-or Users → Permissions**, then search for "buildnw permissions" and check
-"Can send buildnw" for the relevant group/user.
+Grant it the same way as any other NetBox permission: **Admin → Permissions**
+(NetBox's own Permissions page, not the Django admin's raw per-user
+permission checkbox — NetBox's auth backend doesn't consult that). Create or
+edit a Permission entry:
+
+- **Object types**: `netbox_build_network | buildnw`
+- **Actions**: check `send` ("Can send buildnw")
+- **Enabled**: checked
+- **Users**/**Groups**: assign directly to a user, or to a group — if a
+  group, the target user must actually be a member of it
+
+NetBox constructs the granted permission string as
+`{app_label}.{action}_{model_name}` (see
+`netbox/netbox/authentication/__init__.py` in NetBox core), which is why the
+model is named `Buildnw` and the action `send` — combined they produce
+`netbox_build_network.send_buildnw`, matching what the plugin checks for.
 
 ## Install
 
