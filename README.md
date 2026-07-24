@@ -1,14 +1,18 @@
 # netbox-build-network
 
 Adds a "Build Network" entry under the **Plugins** dropdown in NetBox's top
-nav. Clicking it hits an internal plugin URL, which opens a new browser tab
+nav. Clicking it opens a small landing page within NetBox with a single
+"Send buildnw request" link; clicking that link opens a new browser tab
 pointed at a configurable `buildnw_url` (default `http://example.com:8080/`),
 appending `?message=<username>`, e.g.:
 
     http://example.com:8080/?message=<username>
 
-so the new tab performs the GET request while the original NetBox tab stays
-where it was.
+NetBox's `PluginMenuItem` has no way to make its own link open in a new tab
+(no `target` attribute), and browsers block a script-triggered `window.open()`
+on a freshly-navigated page as a popup — so this uses a real `target="_blank"`
+anchor on an intermediate page instead, which is never blocked since it's a
+direct user click. That's the one extra click.
 
 ## Configuration
 
@@ -126,9 +130,10 @@ docker compose up -d
 ### Verify
 
 Log in to NetBox, open the **Plugins** dropdown in the top navigation menu,
-and confirm a "Build Network" entry appears. Clicking it should open a new
-tab pointed at your configured `buildnw_url` with a `message` query parameter,
-while the original NetBox tab stays put.
+and confirm a "Build Network" entry appears. Clicking it should land on a
+page with a "Send buildnw request" link; clicking that link should open a
+new tab pointed at your configured `buildnw_url` with a `message` query
+parameter, while the original NetBox tab stays put.
 
 ## Compatibility note
 
@@ -143,6 +148,3 @@ import path on NetBox >= 3.5. On older NetBox versions, change the imports in
 - If the configured `buildnw_url` host is unreachable from the end user's
   browser (rather than the NetBox server), the request will fail
   client-side — this plugin does not proxy the request server-side.
-- The new-tab open relies on an inline `<script>` in the intermediate page;
-  a strict `Content-Security-Policy` (e.g. one blocking `script-src` inline)
-  in front of NetBox would prevent it from firing.
