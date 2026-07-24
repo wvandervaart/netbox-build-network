@@ -5,5 +5,5 @@ from . import views
 app_name = 'netbox_build_network'
 
 urlpatterns = [
-    path('build/', views.BeaconRedirectView.as_view(), name='build_network'),
+    path('build/', views.BuildnwRedirectView.as_view(), name='build_network'),
 ]

@@ -2,7 +2,7 @@
 
 Adds a "Build Network" entry under the **Plugins** dropdown in NetBox's top
 nav. Clicking it hits an internal plugin URL, which opens a new browser tab
-pointed at a configurable `beacon_url` (default `http://example.com:8080/`),
+pointed at a configurable `buildnw_url` (default `http://example.com:8080/`),
 appending `?message=<username>`, e.g.:
 
     http://example.com:8080/?message=<username>
@@ -12,26 +12,26 @@ where it was.
 
 ## Configuration
 
-The beacon target is set via NetBox's `PLUGINS_CONFIG`, not hardcoded. Add
+The buildnw target is set via NetBox's `PLUGINS_CONFIG`, not hardcoded. Add
 this to `configuration.py` (or `configuration/plugins.py` for Docker):
 
 ```python
 PLUGINS_CONFIG = {
     'netbox_build_network': {
-        'beacon_url': 'http://example.com:8080/',
+        'buildnw_url': 'http://example.com:8080/',
     },
 }
 ```
 
-If omitted, it falls back to the plugin's `default_settings['beacon_url']`
+If omitted, it falls back to the plugin's `default_settings['buildnw_url']`
 in `netbox_build_network/__init__.py`, which also points at
 `http://example.com:8080/`.
 
 ## Permissions
 
 Access is gated by a custom Django permission,
-`netbox_build_network.send_beacon`, defined on an unmanaged model
-(`BeaconPermissions`) that exists purely to register it — this plugin has no
+`netbox_build_network.send_buildnw`, defined on an unmanaged model
+(`BuildnwPermissions`) that exists purely to register it — this plugin has no
 real data model. Both the menu item and the underlying view check it:
 
 - Users without the permission don't see "Build Network" in the **Plugins**
@@ -41,8 +41,8 @@ real data model. Both the menu item and the underlying view check it:
 - Superusers always pass, per normal Django behavior.
 
 Grant it the same way as any other NetBox permission: **Admin → Users → Groups
-or Users → Permissions**, then search for "beacon permissions" and check
-"Can send beacon" for the relevant group/user.
+or Users → Permissions**, then search for "buildnw permissions" and check
+"Can send buildnw" for the relevant group/user.
 
 ## Install
 
@@ -106,7 +106,7 @@ docker compose up -d
 
 Log in to NetBox, open the **Plugins** dropdown in the top navigation menu,
 and confirm a "Build Network" entry appears. Clicking it should open a new
-tab pointed at your configured `beacon_url` with a `message` query parameter,
+tab pointed at your configured `buildnw_url` with a `message` query parameter,
 while the original NetBox tab stays put.
 
 ## Compatibility note
@@ -117,9 +117,9 @@ import path on NetBox >= 3.5. On older NetBox versions, change the imports in
 
 ## Notes
 
-- The menu item and view require the `netbox_build_network.send_beacon`
+- The menu item and view require the `netbox_build_network.send_buildnw`
   permission (see **Permissions** above), which implies being logged in.
-- If the configured `beacon_url` host is unreachable from the end user's
+- If the configured `buildnw_url` host is unreachable from the end user's
   browser (rather than the NetBox server), the request will fail
   client-side — this plugin does not proxy the request server-side.
 - The new-tab open relies on an inline `<script>` in the intermediate page;
