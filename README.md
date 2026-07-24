@@ -27,6 +27,23 @@ If omitted, it falls back to the plugin's `default_settings['beacon_url']`
 in `netbox_build_network/__init__.py`, which also points at
 `http://example.com:8080/`.
 
+## Permissions
+
+Access is gated by a custom Django permission,
+`netbox_build_network.send_beacon`, defined on an unmanaged model
+(`BeaconPermissions`) that exists purely to register it — this plugin has no
+real data model. Both the menu item and the underlying view check it:
+
+- Users without the permission don't see "Build Network" in the **Plugins**
+  menu at all.
+- Hitting the URL directly without the permission returns a 403; without
+  being logged in, it redirects to the login page.
+- Superusers always pass, per normal Django behavior.
+
+Grant it the same way as any other NetBox permission: **Admin → Users → Groups
+or Users → Permissions**, then search for "beacon permissions" and check
+"Can send beacon" for the relevant group/user.
+
 ## Install
 
 ### Standard (bare-metal / venv) install
@@ -58,7 +75,7 @@ Run NetBox's standard upgrade step and restart the services:
 
 ```bash
 cd /opt/netbox
-sudo ./upgrade.sh          # or: python manage.py migrate / collectstatic
+sudo ./upgrade.sh          # runs migrate + collectstatic; needed to register the plugin's permission
 sudo systemctl restart netbox netbox-rq
 ```
 
@@ -100,8 +117,8 @@ import path on NetBox >= 3.5. On older NetBox versions, change the imports in
 
 ## Notes
 
-- The menu item requires login (`LoginRequiredMixin`) since NetBox already
-  requires auth for the UI.
+- The menu item and view require the `netbox_build_network.send_beacon`
+  permission (see **Permissions** above), which implies being logged in.
 - If the configured `beacon_url` host is unreachable from the end user's
   browser (rather than the NetBox server), the request will fail
   client-side — this plugin does not proxy the request server-side.

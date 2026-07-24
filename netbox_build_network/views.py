@@ -1,7 +1,7 @@
 import json
 from urllib.parse import urlencode
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponse
 from django.views import View
 from netbox.plugins.utils import get_plugin_config
@@ -20,8 +20,10 @@ _PAGE_TEMPLATE = """<!DOCTYPE html>
 """
 
 
-class BeaconRedirectView(LoginRequiredMixin, View):
+class BeaconRedirectView(PermissionRequiredMixin, View):
     """Opens the configured beacon_url in a new tab, triggering a GET with message=<user>."""
+
+    permission_required = 'netbox_build_network.send_beacon'
 
     def get(self, request):
         base_url = get_plugin_config('netbox_build_network', 'beacon_url')
