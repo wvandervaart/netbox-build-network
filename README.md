@@ -1,31 +1,42 @@
 # netbox-build-network
 
 Adds a "Build Network" entry under the **Plugins** dropdown in NetBox's top
-nav. Clicking it hits an internal plugin URL, which opens a new browser tab
-pointed at a configurable `buildnw_url` (default `http://example.com:8080/`),
-appending `?message=<username>`, e.g.:
+nav. Clicking it hits an internal plugin URL, which triggers a server-side
+authenticated `POST` to a configurable `buildnw_url` (default
+`http://example.com:8080/`), with the current username as a JSON body, e.g.:
 
-    http://example.com:8080/?message=<username>
+```bash
+curl -X POST http://example.com:8080/ \
+    -H "Authorization: Bearer <buildnw_token>" \
+    -H "Content-Type: application/json" \
+    -d '{"message": "<username>"}'
+```
 
-so the new tab performs the GET request while the original NetBox tab stays
-where it was.
+The NetBox server makes this request itself (not the end user's browser), so
+the target only needs to be reachable from the NetBox host, and the user is
+redirected back to the page they came from with a success/failure message.
 
 ## Configuration
 
-The buildnw target is set via NetBox's `PLUGINS_CONFIG`, not hardcoded. Add
-this to `configuration.py` (or `configuration/plugins.py` for Docker):
+The buildnw target and credentials are set via NetBox's `PLUGINS_CONFIG`, not
+hardcoded. Add this to `configuration.py` (or `configuration/plugins.py` for
+Docker):
 
 ```python
 PLUGINS_CONFIG = {
     'netbox_build_network': {
         'buildnw_url': 'http://example.com:8080/',
+        'buildnw_token': 'changeme123',
     },
 }
 ```
 
-If omitted, it falls back to the plugin's `default_settings['buildnw_url']`
-in `netbox_build_network/__init__.py`, which also points at
-`http://example.com:8080/`.
+`buildnw_token` is sent as an `Authorization: Bearer <token>` header on every
+request. If `buildnw_url` is omitted, it falls back to the plugin's
+`default_settings['buildnw_url']` in `netbox_build_network/__init__.py`,
+which also points at `http://example.com:8080/`; `buildnw_token` falls back
+to an empty string, which will fail authentication against most real
+buildnw endpoints — set it explicitly.
 
 ## Permissions
 
@@ -126,9 +137,9 @@ docker compose up -d
 ### Verify
 
 Log in to NetBox, open the **Plugins** dropdown in the top navigation menu,
-and confirm a "Build Network" entry appears. Clicking it should open a new
-tab pointed at your configured `buildnw_url` with a `message` query parameter,
-while the original NetBox tab stays put.
+and confirm a "Build Network" entry appears. Clicking it should send a POST
+request to your configured `buildnw_url` and redirect you back to the page
+you came from with a success or failure banner.
 
 ## Compatibility note
 
@@ -140,9 +151,8 @@ import path on NetBox >= 3.5. On older NetBox versions, change the imports in
 
 - The menu item and view require the `netbox_build_network.send_buildnw`
   permission (see **Permissions** above), which implies being logged in.
-- If the configured `buildnw_url` host is unreachable from the end user's
-  browser (rather than the NetBox server), the request will fail
-  client-side — this plugin does not proxy the request server-side.
-- The new-tab open relies on an inline `<script>` in the intermediate page;
-  a strict `Content-Security-Policy` (e.g. one blocking `script-src` inline)
-  in front of NetBox would prevent it from firing.
+- The request is made by the NetBox server itself, so `buildnw_url` must be
+  reachable from the NetBox host, not from end users' browsers.
+- The request has a 10-second timeout; failures (unreachable host, non-2xx
+  response, timeout) are reported back to the user via a Django messages
+  banner rather than raising an error page.

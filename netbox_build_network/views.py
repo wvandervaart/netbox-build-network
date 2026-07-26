@@ -1,39 +1,41 @@
 import json
-from urllib.parse import urlencode
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.views import View
 from netbox.plugins.utils import get_plugin_config
 
-_PAGE_TEMPLATE = """<!DOCTYPE html>
-<html>
-<head><title>Sending buildnw&hellip;</title></head>
-<body>
-<script>
-  window.open({buildnw_url}, '_blank', 'noopener,noreferrer');
-  window.location.replace({back_url});
-</script>
-<p>Buildnw sent in a new window.</p>
-</body>
-</html>
-"""
-
 
 class BuildnwRedirectView(PermissionRequiredMixin, View):
-    """Opens the configured buildnw_url in a new tab, triggering a GET with message=<user>."""
+    """Sends a server-side authenticated POST to the configured buildnw_url."""
 
     permission_required = 'netbox_build_network.send_buildnw'
 
     def get(self, request):
         base_url = get_plugin_config('netbox_build_network', 'buildnw_url')
+        token = get_plugin_config('netbox_build_network', 'buildnw_token')
         message = request.user.get_username()
-        query = urlencode({'message': message})
-        buildnw_url = f'{base_url}?{query}'
         back_url = request.META.get('HTTP_REFERER') or '/'
 
-        html = _PAGE_TEMPLATE.format(
-            buildnw_url=json.dumps(buildnw_url),
-            back_url=json.dumps(back_url),
+        body = json.dumps({'message': message}).encode('utf-8')
+        req = Request(
+            base_url,
+            data=body,
+            method='POST',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {token}',
+            },
         )
-        return HttpResponse(html)
+
+        try:
+            urlopen(req, timeout=10)
+        except URLError as exc:
+            messages.error(request, f'Failed to send buildnw request: {exc}')
+        else:
+            messages.success(request, 'Buildnw request sent.')
+
+        return redirect(back_url)
